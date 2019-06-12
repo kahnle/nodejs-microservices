@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const axios = require('axios');
-
 const http = require('http');
 
 const config = require('../config')[process.env.NODE_ENV || 'development'];
@@ -12,18 +11,23 @@ const service = require('../server/service')(config);
 const server = http.createServer(service);
 
 // Important - a service should not have a fixed port but should randomly choose one
-server.listen(0);
+server.listen(process.env.PORT || 0);
 
 server.on('listening', () => {
-  const registerService = () => axios.put(`http://localhost:3000/register/${config.name}/${config.version}/${server.address().port}`);
-  const unregisterService = () => axios.delete(`http://localhost:3000/register/${config.name}/${config.version}/${server.address().port}`);
+  const registerService = () => axios.put(`http://localhost:3000/register/${config.name}/${config.version}/${server.address().port}`)
+    .catch(err => log.fatal(err));
+  const unregisterService = () => axios.delete(`http://localhost:3000/register/${config.name}/${config.version}/${server.address().port}`)
+    .catch(err => log.fatal(err));
 
   registerService();
-
-  const interval = setInterval(registerService, 20000);
+  const interval = setInterval(registerService, 15000);
   const cleanup = async () => {
-    clearInterval(interval);
-    await unregisterService();
+    let clean = false;
+    if (!clean) {
+      clean = true;
+      clearInterval(interval);
+      await unregisterService();
+    }
   };
 
   process.on('uncaughtException', async () => {
@@ -40,15 +44,6 @@ server.on('listening', () => {
     await cleanup();
     process.exit(0);
   });
-
-  process.on('unhandledRejection', (reason, p) => {
-    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
-    // application specific logging, throwing an error, or other logic here
-  });
-
-//   setTimeout(() => {
-//     throw new Error('Something happened');
-//   }, 10000);
 
   log.info(
     `Hi there! I'm listening on port ${server.address().port} in ${service.get('env')} mode.`,
