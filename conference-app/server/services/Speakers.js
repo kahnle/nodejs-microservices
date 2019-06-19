@@ -1,5 +1,9 @@
 const axios = require('axios');
 
+const CircuitBreaker = require('../lib/CircuitBreaker');
+
+const circuitBreaker = new CircuitBreaker();
+
 class SpeakersService {
   constructor({ serviceRegistryUrl, serviceVersionIdentifier }) {
     this.serviceRegistryUrl = serviceRegistryUrl;
@@ -9,25 +13,25 @@ class SpeakersService {
   async getImage(path) {
     const { ip, port } = await this.getService('speakers-service');
     return this.callService({
-        method: 'get',
-        responseType:  'stream',
-        url: `http://${ip}:${port}/images/${path}`,
+      method: 'get',
+      responseType:  'stream',
+      url: `http://${ip}:${port}/images/${path}`,
     });
   }
 
   async getNames() {
     const { ip, port } = await this.getService('speakers-service');
     return this.callService({
-        method: 'get',
-        url: `http://${ip}:${port}/names`,
+      method: 'get',
+      url: `http://${ip}:${port}/names`,
     });
   }
 
   async getListShort() {
     const { ip, port } = await this.getService('speakers-service');
     return this.callService({
-        method: 'get',
-        url: `http://${ip}:${port}/list-short`,
+      method: 'get',
+      url: `http://${ip}:${port}/list-short`,
     });
   }
 
@@ -58,15 +62,14 @@ class SpeakersService {
   async getArtworkForSpeaker(shortname) {
     const { ip, port } = await this.getService('speaker-service');
     return this.callService({
-        method: 'get',
-        url: `http://${ip}:${port}/artwork/${shortname}`,
+      method: 'get',
+      url: `http://${ip}:${port}/artwork/${shortname}`,
     });
   }
 
+  // eslint-disable-next-line class-methods-use-this
   async callService(requestOptions) {
-      console.log(requestOptions);
-      const response = await axios(requestOptions);
-      return response.data;
+    return circuitBreaker.callService(requestOptions);
   }
 
   async getService(servicename) {
