@@ -16,7 +16,7 @@ class CircuitBreaker {
     requestOptions.timeout = this.requestTimeout * 1000;
 
     try {
-      const response = await axios(requestOptions)
+      const response = await axios(requestOptions);
       this.onSuccess(endpoint);
       return response.data;
     } catch (err) {
@@ -60,7 +60,6 @@ class CircuitBreaker {
       nextTry: 0,
     };
   }
-
 }
 
 module.exports = CircuitBreaker;
